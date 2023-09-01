@@ -16,8 +16,8 @@
 #
 
 Name:           ksmbd-tools
-Version:        master
-Release:        0
+Version:        3.4.9
+Release:        1%{?dist}
 Summary:        ksmbd kernel server userspace utilities
 License:        GPL-2.0-or-later
 Group:          System/Filesystems
