@@ -31,7 +31,7 @@ BuildRequires:  automake
 BuildRequires:  libtool
 BuildRequires:  systemd-rpm-macros
 
-Requires(pre):	kernel-default >= 5.15
+Requires(pre):	kernel >= 5.15
 Requires(pre):	systemd >= 245
 
 %description
