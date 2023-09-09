@@ -31,7 +31,7 @@ AutoReqProv:    no
 This package contains the dkms ksmbd kernel module.
 
 %prep
-%setup -q -n %{module}-%{version}
+%setup -q -n %{module}-%{commit}
 
 %install
 if [ "$RPM_BUILD_ROOT" != "/" ]; then
