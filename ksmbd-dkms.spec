@@ -1,16 +1,20 @@
 #
 # spec file for package ksmbd-dkms
 #
+%global forgeurl https://github.com/cifsd-team/ksmbd
+%global commit  bf249dcef4d5a20eabf9656154419a0042769b90
+%forgemeta
+
 %define module  ksmbd
 
 Name:           ksmbd-dkms
-Version:        3.4.8
+Version:        20230721
 Release:        1%{?dist}
 Summary:        Kernel module(s) (dkms)
 
 License:        GPL-2.0-or-later
-URL:            https://github.com/cifsd-team/ksmbd
-Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
+URL:            %{forgeurl}
+Source0:        %{forgesource}
 BuildArch:      noarch
 
 Requires:       dkms >= 2.2.0.3
