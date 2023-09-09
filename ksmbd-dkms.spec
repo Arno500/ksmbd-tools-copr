@@ -57,4 +57,4 @@ dkms remove -m %{module} -v %{version} --all
 
 %changelog
 * Sun Sep 03 2023 Nicholas Kudriavtsev <nkudriavtsev@gmail.com>
-- Release 3.4.8
+- Release 20230721
