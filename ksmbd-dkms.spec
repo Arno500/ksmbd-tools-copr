@@ -2,7 +2,6 @@
 # spec file for package ksmbd-dkms
 #
 %global forgeurl https://github.com/cifsd-team/ksmbd
-%forgemeta
 
 %define module  ksmbd
 
@@ -10,6 +9,7 @@ Name:           ksmbd-dkms
 Version:        3.4.9
 Release:        1%{?dist}
 Summary:        Kernel module(s) (dkms)
+%forgemeta
 
 License:        GPL-2.0-or-later
 URL:            %{forgeurl}
