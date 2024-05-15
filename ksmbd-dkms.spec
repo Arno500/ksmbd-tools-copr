@@ -6,7 +6,7 @@
 %define module  ksmbd
 
 Name:           ksmbd-dkms
-Version:        3.4.9
+Version:        3.5.0
 Release:        1%{?dist}
 Summary:        Kernel module(s) (dkms)
 
@@ -57,6 +57,8 @@ dkms remove -m %{module} -v %{version} --all
 /usr/lib/dkms/common.postinst %{module} %{version}
 
 %changelog
+* Wed May 15 2024 Nicholas Kudriavtsev <nkudriavtsev@gmail.com>
+- Release 3.5.0
 * Mon Feb 05 2024 Nicholas Kudriavtsev <nkudriavtsev@gmail.com>
 - Release 3.4.9
 * Sun Sep 03 2023 Nicholas Kudriavtsev <nkudriavtsev@gmail.com>
