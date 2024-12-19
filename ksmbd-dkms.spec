@@ -7,7 +7,7 @@
 
 Name:           ksmbd-dkms
 Version:        3.5.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Kernel module(s) (dkms)
 
 %global tag %{version}
