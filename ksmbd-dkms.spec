@@ -53,8 +53,9 @@ fi
 %preun
 dkms remove -m %{module} -v %{version} --all
 
-%posttrans
-/usr/lib/dkms/common.postinst %{module} %{version}
+%post
+dkms add -m %{module} -v %{version}
+dkms install --force -m %{module} -v %{version}
 
 %changelog
 * Wed May 15 2024 Nicholas Kudriavtsev <nkudriavtsev@gmail.com>
