@@ -51,11 +51,11 @@ fi
 /usr/src/%{module}-%{version}
 
 %preun
-dkms remove -m %{module} -v %{version} --all
+dkms remove -m %{module} -v %{version} --all --rpm_safe_upgrade
 
 %post
-dkms add -m %{module} -v %{version}
-dkms install --force -m %{module} -v %{version}
+dkms add -m %{module} -v %{version} --rpm_safe_upgrade
+dkms install --force -m %{module} -v %{version} --rpm_safe_upgrade
 
 %changelog
 * Wed May 15 2024 Nicholas Kudriavtsev <nkudriavtsev@gmail.com>
