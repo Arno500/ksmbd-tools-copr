@@ -7,10 +7,10 @@
 
 Name:           ksmbd-dkms
 Version:        3.5.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Kernel module(s) (dkms)
 
-%global tag %{version}
+%global branch master
 %forgemeta
 
 License:        GPL-2.0-or-later
