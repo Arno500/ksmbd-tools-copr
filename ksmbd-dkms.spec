@@ -39,7 +39,7 @@ if [ "$RPM_BUILD_ROOT" != "/" ]; then
     rm -rf $RPM_BUILD_ROOT
 fi
 mkdir -p $RPM_BUILD_ROOT/usr/src/%{module}-%{version}
-cp -rf ${RPM_BUILD_DIR}/%{module}-%{version} $RPM_BUILD_ROOT/usr/src/
+cp -rf ${RPM_BUILD_DIR}/%{module}-master/* $RPM_BUILD_ROOT/usr/src/%{module}-%{version}
 
 %clean
 if [ "$RPM_BUILD_ROOT" != "/" ]; then
