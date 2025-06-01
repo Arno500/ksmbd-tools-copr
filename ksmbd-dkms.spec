@@ -58,6 +58,8 @@ dkms add -m %{module} -v %{version} --rpm_safe_upgrade
 dkms install --force -m %{module} -v %{version} --rpm_safe_upgrade
 
 %changelog
+* Sun June 1 2025 Arno Dubois <arno.du@orange.fr>
+- Release 3.5.0-6
 * Wed May 15 2024 Nicholas Kudriavtsev <nkudriavtsev@gmail.com>
 - Release 3.5.0
 * Mon Feb 05 2024 Nicholas Kudriavtsev <nkudriavtsev@gmail.com>
