@@ -1,13 +1,13 @@
 #
 # spec file for package ksmbd-dkms
 #
-%global forgeurl https://github.com/cifsd-team/ksmbd
+%global forgeurl https://github.com/namjaejeon/ksmbd
 
 %define module  ksmbd
 
 Name:           ksmbd-dkms
 Version:        3.5.0
-Release:        11%{?dist}
+Release:        12%{?dist}
 Summary:        Kernel module(s) (dkms)
 
 %global branch master
@@ -58,6 +58,8 @@ dkms add -m %{module} -v %{version}-%{release} --rpm_safe_upgrade
 dkms install --force -m %{module} -v %{version}-%{release} --rpm_safe_upgrade
 
 %changelog
+* Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
+- Release 3.5.0-12
 * Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.0-11
 * Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
