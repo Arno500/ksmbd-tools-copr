@@ -7,7 +7,7 @@
 
 Name:           ksmbd-dkms
 Version:        3.5.0
-Release:        10%{?dist}
+Release:        11%{?dist}
 Summary:        Kernel module(s) (dkms)
 
 %global branch master
@@ -38,8 +38,8 @@ This package contains the dkms ksmbd kernel module.
 if [ "$RPM_BUILD_ROOT" != "/" ]; then
     rm -rf $RPM_BUILD_ROOT
 fi
-mkdir -p $RPM_BUILD_ROOT/usr/src/%{module}-%{version}
-cp -rf ${RPM_BUILD_DIR}/%{module}-master/. $RPM_BUILD_ROOT/usr/src/%{module}-%{version}
+mkdir -p $RPM_BUILD_ROOT/usr/src/%{module}-%{version}-%{release}
+cp -rf ${RPM_BUILD_DIR}/%{module}-master/. $RPM_BUILD_ROOT/usr/src/%{module}-%{version}-%{release}
 
 %clean
 if [ "$RPM_BUILD_ROOT" != "/" ]; then
@@ -58,6 +58,8 @@ dkms add -m %{module} -v %{version}-%{release} --rpm_safe_upgrade
 dkms install --force -m %{module} -v %{version}-%{release} --rpm_safe_upgrade
 
 %changelog
+* Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
+- Release 3.5.0-11
 * Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.0-10
 * Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
