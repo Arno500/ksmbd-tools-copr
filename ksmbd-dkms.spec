@@ -7,7 +7,7 @@
 
 Name:           ksmbd-dkms
 Version:        3.5.0
-Release:        9%{?dist}
+Release:        10%{?dist}
 Summary:        Kernel module(s) (dkms)
 
 %global branch master
@@ -48,7 +48,7 @@ fi
 
 %files
 %defattr(-,root,root)
-/usr/src/%{module}-%{version}
+/usr/src/%{module}-%{version}-%{release}
 
 %preun
 dkms remove -m %{module} -v %{version}-%{release} --all --rpm_safe_upgrade
@@ -58,6 +58,8 @@ dkms add -m %{module} -v %{version}-%{release} --rpm_safe_upgrade
 dkms install --force -m %{module} -v %{version}-%{release} --rpm_safe_upgrade
 
 %changelog
+* Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
+- Release 3.5.0-10
 * Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.0-9
 * Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
