@@ -6,7 +6,7 @@
 %define module  ksmbd
 
 Name:           ksmbd-dkms
-Version:        3.5.2
+Version:        3.5.4
 Release:        1%{?dist}
 Summary:        Kernel module(s) (dkms)
 
@@ -58,6 +58,8 @@ dkms add -m %{module} -v %{version}-%{release} --rpm_safe_upgrade
 dkms install --force -m %{module} -v %{version}-%{release} --rpm_safe_upgrade
 
 %changelog
+* Fri January 16 2026 Arno Dubois <arno.du@orange.fr>
+- Release 3.5.4-1
 * Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.2-1
 * Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
