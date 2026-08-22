@@ -19,7 +19,7 @@
 # name should have a -kmod suffix
 Name:           %{kmod_name}-kmod
 Version:        6.10
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        ksmbd (fs/smb/server) kernel module(s)
 Group:          System Environment/Kernel
 License:        GPL-2.0-only
@@ -52,6 +52,25 @@ config ships this driver disabled and does not include its source, even
 though the code lives upstream in the kernel tree. This package builds it
 directly from the Linux kernel source matching each target kernel version,
 rather than from a separately maintained out-of-tree copy.
+
+# kmodtool's generated akmod-%{kmod_name} and kmod-%{kmod_name}-<kernel>
+# packages unconditionally Require: %{kmod_name}-kmod-common >= %{version}
+# (a version-locked, kernel-independent companion package), but kmodtool
+# does not generate that package itself -- RPM Fusion ships it as a fully
+# separate sibling spec (e.g. nvidia-kmod-common.spec). We have no actual
+# kernel-independent payload to ship, so just provide it as an empty
+# subpackage here instead of a whole separate spec/COPR package.
+%package -n %{kmod_name}-kmod-common
+Summary:        Common files for the %{kmod_name} kernel module variants
+Group:          System Environment/Kernel
+BuildArch:      noarch
+
+%description -n %{kmod_name}-kmod-common
+Empty version-lock placeholder required by kmodtool's generated
+akmod-%{kmod_name}/kmod-%{kmod_name} packages. Carries no payload.
+
+%files -n %{kmod_name}-kmod-common
+%defattr(-,root,root,-)
 
 %prep
 # error out if there was something wrong with kmodtool
@@ -136,6 +155,12 @@ done
 
 
 %changelog
+* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+- Release 6.10-2
+- Add the ksmbd-kmod-common subpackage that kmodtool's generated
+  akmod-ksmbd/kmod-ksmbd packages require but that kmodtool itself does
+  not generate. Without it, "dnf install kmod-ksmbd" failed to resolve
+  with "no provider for ksmbd-kmod-common >= 6.10".
 * Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 6.10-1
 - Rewrite as an akmod/kmodtool package instead of raw DKMS. Rather than
