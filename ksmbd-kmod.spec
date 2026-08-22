@@ -19,7 +19,7 @@
 # name should have a -kmod suffix
 Name:           %{kmod_name}-kmod
 Version:        6.10
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        ksmbd (fs/smb/server) kernel module(s)
 Group:          System Environment/Kernel
 License:        GPL-2.0-only
@@ -40,11 +40,23 @@ BuildRequires:  kernel-devel
 # come out as the conventional akmod-ksmbd / kmod-ksmbd (matching e.g.
 # RPM Fusion's akmod-nvidia / kmod-nvidia), instead of the redundant
 # akmod-ksmbd-kmod / kmod-ksmbd-kmod you'd get from --kmodname %{name}.
-%{expand:%(kmodtool --target %{_target_cpu} --repo %{repo} --kmodname %{kmod_name} %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null | sed 's|extra|updates|g' | sed 's|%{kmod_name}/||g') }
+%{expand:%(kmodtool --target %{_target_cpu} --repo %{repo} --kmodname %{kmod_name} %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null | sed 's|extra|updates|g' | sed 's|%{kmod_name}/||g' | sed -E 's|^nohup (.*) &> /dev/null &$|\1|') }
 
-# NOTE: the sed calls above substitute the module's destination path to the
-# "updates" directory (instead of "extra") since this driver mirrors an
-# in-tree module, not a genuinely third-party one.
+# NOTE: the first sed call above substitutes the module's destination path
+# to the "updates" directory (instead of "extra") since this driver mirrors
+# an in-tree module, not a genuinely third-party one.
+#
+# The third sed call strips the "nohup ... &> /dev/null &" backgrounding
+# kmodtool puts on akmod-%{kmod_name}'s %posttrans rebuild trigger, so that
+# "dnf install kmod-ksmbd" (and any package-level %posttrans re-trigger,
+# e.g. on a ksmbd-kmod version bump) actually waits for the koji fetch +
+# build to finish and fails loudly, with visible output, if it doesn't --
+# instead of silently backgrounding it and reporting success regardless.
+# NOTE: this does NOT cover a future *kernel* upgrade -- that rebuild is
+# triggered by /etc/kernel/postinst.d/akmodsposttrans, which ships in the
+# akmods package itself (not ours to patch) and still backgrounds the
+# build. A kernel bump can still leave the module un-built until you check
+# `journalctl` or `akmods --force --kmod ksmbd` yourself.
 
 %description
 The ksmbd (SMB3 kernel server, fs/smb/server) driver. Fedora's kernel
@@ -155,6 +167,13 @@ done
 
 
 %changelog
+* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+- Release 6.10-3
+- Strip the "nohup ... &> /dev/null &" backgrounding kmodtool puts on
+  akmod-ksmbd's %posttrans rebuild trigger, so "dnf install kmod-ksmbd"
+  waits for the actual koji-fetch + build and fails loudly, with visible
+  output, instead of silently backgrounding it. Does not cover kernel
+  upgrades, whose rebuild trigger lives in the akmods package itself.
 * Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 6.10-2
 - Add the ksmbd-kmod-common subpackage that kmodtool's generated
