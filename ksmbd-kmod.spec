@@ -18,7 +18,7 @@
 # name should have a -kmod suffix
 Name:           %{kmod_name}-kmod
 Version:        6.10
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        ksmbd (fs/smb/server) kernel module(s)
 Group:          System Environment/Kernel
 License:        GPL-2.0-only
@@ -39,23 +39,28 @@ BuildRequires:  kernel-devel
 # come out as the conventional akmod-ksmbd / kmod-ksmbd (matching e.g.
 # RPM Fusion's akmod-nvidia / kmod-nvidia), instead of the redundant
 # akmod-ksmbd-kmod / kmod-ksmbd-kmod you'd get from --kmodname %{name}.
-%{expand:%(kmodtool --target %{_target_cpu} --repo %{repo} --kmodname %{kmod_name} %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null | sed 's|extra|updates|g' | sed 's|%{kmod_name}/||g' | sed -E 's|^nohup (.*) &> /dev/null &$|\1|') }
+%{expand:%(kmodtool --target %{_target_cpu} --repo %{repo} --kmodname %{kmod_name} %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null | sed 's|extra|updates|g' | sed 's|%{kmod_name}/||g') }
 
-# NOTE: the first sed call above substitutes the module's destination path
-# to the "updates" directory (instead of "extra") since this driver mirrors
-# an in-tree module, not a genuinely third-party one.
+# NOTE: the sed call above substitutes the module's destination path to the
+# "updates" directory (instead of "extra") since this driver mirrors an
+# in-tree module, not a genuinely third-party one.
 #
-# The third sed call strips the "nohup ... &> /dev/null &" backgrounding
-# kmodtool puts on akmod-%{kmod_name}'s %posttrans rebuild trigger, so that
-# "dnf install kmod-ksmbd" (and any package-level %posttrans re-trigger,
-# e.g. on a ksmbd-kmod version bump) actually waits for the koji fetch +
-# build to finish and fails loudly, with visible output, if it doesn't --
-# instead of silently backgrounding it and reporting success regardless.
-# NOTE: this does NOT cover a future *kernel* upgrade -- that rebuild is
-# triggered by /etc/kernel/postinst.d/akmodsposttrans, which ships in the
-# akmods package itself (not ours to patch) and still backgrounds the
-# build. A kernel bump can still leave the module un-built until you check
-# `journalctl` or `akmods --force --kmod ksmbd` yourself.
+# We deliberately do NOT strip the "nohup ... &> /dev/null &" backgrounding
+# kmodtool puts on akmod-%{kmod_name}'s %posttrans rebuild trigger (an
+# earlier release of this spec did, to make "dnf install kmod-ksmbd" wait
+# and fail loudly on a build error). That backgrounding is load-bearing,
+# not just cosmetic: akmodsbuild delivers its result by running
+# `dnf install <built-rpm>` itself, and dnf can't run two overlapping
+# transactions. Running the rebuild synchronously, inside the very dnf
+# transaction that triggered it, deadlocks -- confirmed in testing: the
+# install just hangs forever with 0% CPU, `lslocks` shows the outer dnf
+# holding /run/dnf/rpmtransaction.lock while akmodsbuild's own inner
+# `dnf install` waits on that same lock. So this rebuild trigger -- like
+# every other one akmods has (kernel upgrades go through
+# /etc/kernel/postinst.d/akmodsposttrans, which backgrounds the same way)
+# -- runs asynchronously. A build failure won't block or fail the
+# triggering dnf transaction; check `journalctl` or run
+# `akmods --force --kmod ksmbd -v` yourself to see it.
 
 %description
 The ksmbd (SMB3 kernel server, fs/smb/server) driver. Fedora's kernel
@@ -189,6 +194,18 @@ done
 
 
 %changelog
+* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+- Release 6.10-6
+- Revert the 6.10-3 change that stripped akmod-ksmbd's %posttrans
+  backgrounding. It deadlocks: akmodsbuild delivers its result via its
+  own internal `dnf install <built-rpm>` call, and dnf refuses overlapping
+  transactions, so running the rebuild synchronously inside the very dnf
+  transaction that triggered it hangs forever (confirmed: 0% CPU, the
+  outer dnf holding /run/dnf/rpmtransaction.lock while akmodsbuild's own
+  inner dnf install waits on it). Rebuild triggers -- on install and on
+  kernel upgrade alike -- go back to running asynchronously, same as every
+  other akmod package. A build failure won't fail the triggering dnf
+  transaction; check `journalctl` or `akmods --force --kmod ksmbd -v`.
 * Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 6.10-5
 - Copy the whole fs/ subtree from the koji-fetched source, instead of just
