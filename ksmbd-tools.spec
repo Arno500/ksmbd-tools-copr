@@ -63,10 +63,11 @@ make %{?_smp_mflags}
 %{_mandir}/man5/ksmbd.conf.5*
 %{_mandir}/man5/ksmbdpwd.db.5*
 %{_sysconfdir}/ksmbd/ksmbd.conf.example
+%config(noreplace) %{_sysconfdir}/ksmbd/ksmbd.conf
 %{_unitdir}/ksmbd.service
 
 %changelog
-* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+* Sun Aug 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.7-1
 - Bump to upstream 3.5.7.
 - Patch ksmbd.service to retry on failure (Restart=on-failure,

@@ -37,28 +37,28 @@ afterwards.
 %files
 
 %changelog
-* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+* Sun Aug 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 3.6.0-1
 - Turn into an empty transitional package requiring kmod-ksmbd, so
   existing ksmbd-dkms installs pick up the akmod-based replacement via a
   plain "dnf upgrade" instead of being left on an abandoned package.
-* Fri January 16 2026 Arno Dubois <arno.du@orange.fr>
+* Fri Jan 16 2026 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.4-1
-* Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
+* Fri Aug 29 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.2-1
-* Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
+* Fri Aug 29 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.0-12
-* Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
+* Fri Aug 29 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.0-11
-* Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
+* Fri Aug 29 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.0-10
-* Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
+* Fri Aug 29 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.0-9
-* Fri August 29 2025 Arno Dubois <arno.du@orange.fr>
+* Fri Aug 29 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.0-8
-* Sun June 26 2025 Arno Dubois <arno.du@orange.fr>
+* Sun Jun 26 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.0-7
-* Sun June 1 2025 Arno Dubois <arno.du@orange.fr>
+* Sun Jun 1 2025 Arno Dubois <arno.du@orange.fr>
 - Release 3.5.0-6
 * Wed May 15 2024 Nicholas Kudriavtsev <nkudriavtsev@gmail.com>
 - Release 3.5.0

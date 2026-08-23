@@ -194,7 +194,7 @@ done
 
 
 %changelog
-* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+* Sun Aug 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 6.10-6
 - Revert the 6.10-3 change that stripped akmod-ksmbd's %posttrans
   backgrounding. It deadlocks: akmodsbuild delivers its result via its
@@ -206,7 +206,7 @@ done
   kernel upgrade alike -- go back to running asynchronously, same as every
   other akmod package. A build failure won't fail the triggering dnf
   transaction; check `journalctl` or `akmods --force --kmod ksmbd -v`.
-* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+* Sun Aug 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 6.10-5
 - Copy the whole fs/ subtree from the koji-fetched source, instead of just
   fs/smb/server + fs/smb/common, and point M= directly at fs/smb/server
@@ -216,7 +216,7 @@ done
   file or directory") once we stopped copying the full kernel tree in
   6.10-4. Preserving the real fs/ layout resolves every such include
   without having to chase each cross-directory reference by hand.
-* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+* Sun Aug 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 6.10-4
 - Stop running "make prepare"/"modules_prepare" on the koji-fetched kernel
   tree. That step re-detects the local machine's gcc/rustc/pahole versions
@@ -230,20 +230,20 @@ done
   actual build happens against the already-fully-prepared kernel-devel
   tree directly, which is guaranteed ABI-correct with no local
   toolchain-matching required.
-* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+* Sun Aug 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 6.10-3
 - Strip the "nohup ... &> /dev/null &" backgrounding kmodtool puts on
   akmod-ksmbd's %posttrans rebuild trigger, so "dnf install kmod-ksmbd"
   waits for the actual koji-fetch + build and fails loudly, with visible
   output, instead of silently backgrounding it. Does not cover kernel
   upgrades, whose rebuild trigger lives in the akmods package itself.
-* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+* Sun Aug 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 6.10-2
 - Add the ksmbd-kmod-common subpackage that kmodtool's generated
   akmod-ksmbd/kmod-ksmbd packages require but that kmodtool itself does
   not generate. Without it, "dnf install kmod-ksmbd" failed to resolve
   with "no provider for ksmbd-kmod-common >= 6.10".
-* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+* Sun Aug 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 6.10-1
 - Rewrite as an akmod/kmodtool package instead of raw DKMS. Rather than
   vendoring a fixed copy of the namjaejeon/ksmbd out-of-tree repository (or
