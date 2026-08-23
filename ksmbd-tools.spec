@@ -16,13 +16,14 @@
 #
 
 Name:           ksmbd-tools
-Version:        3.5.6
+Version:        3.5.7
 Release:        1%{?dist}
 Summary:        ksmbd kernel server userspace utilities
 License:        GPL-2.0-or-later
 Group:          System/Filesystems
 Url:            https://github.com/cifsd-team/ksmbd-tools
 Source:         %{url}/archive/%{version}/%{name}-%{version}.tar.gz
+Patch0:         ksmbd-tools-service-retry.patch
 
 BuildRequires:  glib2-devel
 BuildRequires:  libnl3-devel
@@ -39,6 +40,7 @@ Collection of userspace utilities for the ksmbd kernel server.
 
 %prep
 %setup -q
+%patch0 -p1
 
 %build
 ./autogen.sh
@@ -64,3 +66,14 @@ make %{?_smp_mflags}
 %{_unitdir}/ksmbd.service
 
 %changelog
+* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+- Release 3.5.7-1
+- Bump to upstream 3.5.7.
+- Patch ksmbd.service to retry on failure (Restart=on-failure,
+  RestartSec=15, StartLimitIntervalSec=0 to disable rate-limiting). The
+  unit Requires=modprobe@ksmbd.service, so if the ksmbd kernel module
+  isn't built yet at boot (e.g. akmod-ksmbd is still compiling it in the
+  background), ksmbd.service used to fail once and stay down; now it
+  keeps retrying, and each retry re-attempts modprobe@ksmbd.service too,
+  so it self-heals once the module becomes available instead of requiring
+  a manual restart.

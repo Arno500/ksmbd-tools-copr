@@ -1,0 +1,19 @@
+--- a/ksmbd.service.in
++++ b/ksmbd.service.in
+@@ -2,6 +2,7 @@
+ Description=ksmbd userspace daemon
+ Requires=modprobe@ksmbd.service
+ After=modprobe@ksmbd.service network.target
++StartLimitIntervalSec=0
+ 
+ [Service]
+ Type=forking
+@@ -9,6 +10,8 @@
+ ExecStart=@sbindir@/ksmbd.mountd
+ ExecReload=@sbindir@/ksmbd.control --reload
+ ExecStop=@sbindir@/ksmbd.control --shutdown
++Restart=on-failure
++RestartSec=15
+ 
+ [Install]
+ WantedBy=multi-user.target
