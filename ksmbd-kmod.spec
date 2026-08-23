@@ -13,13 +13,12 @@
 %global debug_package %{nil}
 
 %define kmod_name         ksmbd
-%define kmod_driver_path  fs/smb/server
 %define repo              local
 
 # name should have a -kmod suffix
 Name:           %{kmod_name}-kmod
 Version:        6.10
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        ksmbd (fs/smb/server) kernel module(s)
 Group:          System Environment/Kernel
 License:        GPL-2.0-only
@@ -94,9 +93,7 @@ kmodtool --target %{_target_cpu} --repo %{repo} --kmodname %{kmod_name} %{?build
 for kernel_version in %{?kernel_versions} ; do
     kernel_v=${kernel_version%%___*}                            # eg. 6.12.11-200.fc41.x86_64
     kernel_v_no_arch=${kernel_v%.*}                             # eg. 6.12.11-200.fc41
-    kernel_extra=${kernel_v#*-}                                 # eg. 200.fc41.x86_64
     kernel_v_no_extra="$(echo -n ${kernel_v} | cut -d"-" -f1)"  # eg. 6.12.11
-    kernel_src_dir=${kernel_version##*__}                       # eg. /usr/src/kernels/6.12.11-200.fc41.x86_64
 
     mkdir -p "${kernel_v_no_arch}"
 
@@ -133,40 +130,89 @@ for kernel_version in %{?kernel_versions} ; do
         build_dir="./kernel-${kernel_v_no_extra}/linux-${kernel_v}"
     fi
 
-    # Prepare build directory
-    mv "$build_dir" ../_kmod_build_${kernel_v}
+    mv "$build_dir" ../_koji_src_${kernel_v}
 
     popd
     # ------------------------------------------------------------------------
     rm -r "${kernel_v_no_arch}"
 
-    # Copy essential files from kernel src directory
-    cp -a ${kernel_src_dir}/{.config,Module.symvers,System.map} ./_kmod_build_${kernel_v}/
+    # We only need the fs/smb/server (+ fs/smb/common) *source* out of the
+    # koji-fetched, patch-applied tree -- NOT a locally re-prepared kernel
+    # build tree. Running our own "make prepare"/"modules_prepare" on that
+    # tree (as this spec used to) re-detects the LOCAL machine's gcc/rustc/
+    # pahole versions, which can silently drift from whatever produced the
+    # actual running kernel (e.g. a gcc update since the kernel was built,
+    # or rustc/pahole simply not being installed at all -- Fedora's own
+    # koji builders have them, a plain server usually doesn't). That drift
+    # changes real CONFIG_* values (seen in the wild: CONFIG_SCHED_CLASS_EXT
+    # and other rustc-gated options silently disappearing), which changes
+    # struct module's size, which makes the kernel refuse to load the
+    # otherwise-fine, correctly-signed module ("Exec format error" /
+    # ".gnu.linkonce.this_module section size must match..." in dmesg).
+    #
+    # The fix: build straight against the already-fully-prepared kernel-devel
+    # tree (${kernel_src_dir}, used as KDIR in %build/%install below) --
+    # it's guaranteed to match the real running kernel's ABI by construction,
+    # no local prepare or toolchain-matching required.
+    mkdir -p "_kmod_src_${kernel_v}/server"
+    cp -a "_koji_src_${kernel_v}/fs/smb/server/." "_kmod_src_${kernel_v}/server/"
+    if [ -d "_koji_src_${kernel_v}/fs/smb/common" ]; then
+        mkdir -p "_kmod_src_${kernel_v}/common"
+        cp -a "_koji_src_${kernel_v}/fs/smb/common/." "_kmod_src_${kernel_v}/common/"
+    fi
+    rm -rf "_koji_src_${kernel_v}"
 
-    # Set correct extra version in Makefile
-    sed -i 's/^EXTRAVERSION.*$/EXTRAVERSION=-'"${kernel_extra}"'/' "./_kmod_build_${kernel_v}/Makefile"
+    cat > "_kmod_src_${kernel_v}/Makefile" <<'MODULE_MAKEFILE'
+ifneq ($(KERNELRELEASE),)
+subdir-ccflags-y += -I$(src)/common
+obj-$(CONFIG_SMB_SERVER) += server/
+else
+KDIR ?= /lib/modules/$(shell uname -r)/build
+PWD := $(CURDIR)
+all:
+	$(MAKE) -C $(KDIR) M=$(PWD) CONFIG_SMB_SERVER=m modules
+clean:
+	$(MAKE) -C $(KDIR) M=$(PWD) CONFIG_SMB_SERVER=m clean
+endif
+MODULE_MAKEFILE
 done
 
 
 %build
 for kernel_version in %{?kernel_versions}; do
-    yes "" | make %{?_smp_mflags} -C "${PWD}/_kmod_build_${kernel_version%%___*}/" prepare
-    yes "" | make %{?_smp_mflags} -C "${PWD}/_kmod_build_${kernel_version%%___*}/" modules_prepare
-    make %{?_smp_mflags} -C "${PWD}/_kmod_build_${kernel_version%%___*}/" M=%{kmod_driver_path} CONFIG_SMB_SERVER=m modules
+    kernel_v=${kernel_version%%___*}
+    kernel_src_dir=${kernel_version##*__}
+    make %{?_smp_mflags} -C "${kernel_src_dir}" M="${PWD}/_kmod_src_${kernel_v}" CONFIG_SMB_SERVER=m modules
 done
 
 
 %install
 for kernel_version in %{?kernel_versions}; do
-    make %{?_smp_mflags} -C "${PWD}/_kmod_build_${kernel_version%%___*}/" M=%{kmod_driver_path} INSTALL_MOD_PATH=${RPM_BUILD_ROOT} modules_install
+    kernel_v=${kernel_version%%___*}
+    kernel_src_dir=${kernel_version##*__}
+    make %{?_smp_mflags} -C "${kernel_src_dir}" M="${PWD}/_kmod_src_${kernel_v}" INSTALL_MOD_PATH=${RPM_BUILD_ROOT} modules_install
 
     # Delete modules.* files
-    rm -f ${RPM_BUILD_ROOT}%{kmodinstdir_prefix}${kernel_version%%___*}/modules.*
+    rm -f ${RPM_BUILD_ROOT}%{kmodinstdir_prefix}${kernel_v}/modules.*
 done
 %{?akmod_install}
 
 
 %changelog
+* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+- Release 6.10-4
+- Stop running "make prepare"/"modules_prepare" on the koji-fetched kernel
+  tree. That step re-detects the local machine's gcc/rustc/pahole versions
+  and can silently disable real CONFIG_* options that don't match what
+  actually built the running kernel (observed: CONFIG_SCHED_CLASS_EXT and
+  other rustc-gated options vanishing because rustc isn't installed
+  locally), changing struct module's size and making the kernel reject an
+  otherwise correctly built and signed module with "Exec format error" /
+  ".gnu.linkonce.this_module section size must match...". Now only the
+  fs/smb/server + fs/smb/common source is taken from the koji tree; the
+  actual build happens against the already-fully-prepared kernel-devel
+  tree directly, which is guaranteed ABI-correct with no local
+  toolchain-matching required.
 * Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 6.10-3
 - Strip the "nohup ... &> /dev/null &" backgrounding kmodtool puts on
