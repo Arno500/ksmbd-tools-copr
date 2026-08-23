@@ -18,7 +18,7 @@
 # name should have a -kmod suffix
 Name:           %{kmod_name}-kmod
 Version:        6.10
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        ksmbd (fs/smb/server) kernel module(s)
 Group:          System Environment/Kernel
 License:        GPL-2.0-only
@@ -136,45 +136,35 @@ for kernel_version in %{?kernel_versions} ; do
     # ------------------------------------------------------------------------
     rm -r "${kernel_v_no_arch}"
 
-    # We only need the fs/smb/server (+ fs/smb/common) *source* out of the
-    # koji-fetched, patch-applied tree -- NOT a locally re-prepared kernel
-    # build tree. Running our own "make prepare"/"modules_prepare" on that
-    # tree (as this spec used to) re-detects the LOCAL machine's gcc/rustc/
-    # pahole versions, which can silently drift from whatever produced the
-    # actual running kernel (e.g. a gcc update since the kernel was built,
-    # or rustc/pahole simply not being installed at all -- Fedora's own
-    # koji builders have them, a plain server usually doesn't). That drift
-    # changes real CONFIG_* values (seen in the wild: CONFIG_SCHED_CLASS_EXT
-    # and other rustc-gated options silently disappearing), which changes
-    # struct module's size, which makes the kernel refuse to load the
-    # otherwise-fine, correctly-signed module ("Exec format error" /
+    # We only need *source* out of the koji-fetched, patch-applied tree --
+    # NOT a locally re-prepared kernel build tree. Running our own
+    # "make prepare"/"modules_prepare" on that tree (as this spec used to)
+    # re-detects the LOCAL machine's gcc/rustc/pahole versions, which can
+    # silently drift from whatever produced the actual running kernel (e.g.
+    # a gcc update since the kernel was built, or rustc/pahole simply not
+    # being installed at all -- Fedora's own koji builders have them, a
+    # plain server usually doesn't). That drift changes real CONFIG_*
+    # values (seen in the wild: CONFIG_SCHED_CLASS_EXT and other
+    # rustc-gated options silently disappearing), which changes struct
+    # module's size, which makes the kernel refuse to load the otherwise-
+    # fine, correctly-signed module ("Exec format error" /
     # ".gnu.linkonce.this_module section size must match..." in dmesg).
     #
     # The fix: build straight against the already-fully-prepared kernel-devel
     # tree (${kernel_src_dir}, used as KDIR in %build/%install below) --
     # it's guaranteed to match the real running kernel's ABI by construction,
     # no local prepare or toolchain-matching required.
-    mkdir -p "_kmod_src_${kernel_v}/server"
-    cp -a "_koji_src_${kernel_v}/fs/smb/server/." "_kmod_src_${kernel_v}/server/"
-    if [ -d "_koji_src_${kernel_v}/fs/smb/common" ]; then
-        mkdir -p "_kmod_src_${kernel_v}/common"
-        cp -a "_koji_src_${kernel_v}/fs/smb/common/." "_kmod_src_${kernel_v}/common/"
-    fi
+    #
+    # We copy the whole fs/ subtree (not just fs/smb/server + fs/smb/common)
+    # and point M= directly at fs/smb/server within it, using that
+    # directory's own real Makefile as-is. fs/smb/server's sources reach
+    # outside fs/smb/ via plain relative includes (e.g. unicode.h pulls in
+    # "../../nls/nls_ucs2_utils.h"), so preserving the real fs/ layout is
+    # what makes every such include resolve correctly, instead of chasing
+    # each cross-directory reference by hand.
+    mkdir -p "_kmod_src_${kernel_v}"
+    cp -a "_koji_src_${kernel_v}/fs" "_kmod_src_${kernel_v}/"
     rm -rf "_koji_src_${kernel_v}"
-
-    cat > "_kmod_src_${kernel_v}/Makefile" <<'MODULE_MAKEFILE'
-ifneq ($(KERNELRELEASE),)
-subdir-ccflags-y += -I$(src)/common
-obj-$(CONFIG_SMB_SERVER) += server/
-else
-KDIR ?= /lib/modules/$(shell uname -r)/build
-PWD := $(CURDIR)
-all:
-	$(MAKE) -C $(KDIR) M=$(PWD) CONFIG_SMB_SERVER=m modules
-clean:
-	$(MAKE) -C $(KDIR) M=$(PWD) CONFIG_SMB_SERVER=m clean
-endif
-MODULE_MAKEFILE
 done
 
 
@@ -182,7 +172,7 @@ done
 for kernel_version in %{?kernel_versions}; do
     kernel_v=${kernel_version%%___*}
     kernel_src_dir=${kernel_version##*__}
-    make %{?_smp_mflags} -C "${kernel_src_dir}" M="${PWD}/_kmod_src_${kernel_v}" CONFIG_SMB_SERVER=m modules
+    make %{?_smp_mflags} -C "${kernel_src_dir}" M="${PWD}/_kmod_src_${kernel_v}/fs/smb/server" CONFIG_SMB_SERVER=m modules
 done
 
 
@@ -190,7 +180,7 @@ done
 for kernel_version in %{?kernel_versions}; do
     kernel_v=${kernel_version%%___*}
     kernel_src_dir=${kernel_version##*__}
-    make %{?_smp_mflags} -C "${kernel_src_dir}" M="${PWD}/_kmod_src_${kernel_v}" INSTALL_MOD_PATH=${RPM_BUILD_ROOT} modules_install
+    make %{?_smp_mflags} -C "${kernel_src_dir}" M="${PWD}/_kmod_src_${kernel_v}/fs/smb/server" INSTALL_MOD_PATH=${RPM_BUILD_ROOT} modules_install
 
     # Delete modules.* files
     rm -f ${RPM_BUILD_ROOT}%{kmodinstdir_prefix}${kernel_v}/modules.*
@@ -199,6 +189,16 @@ done
 
 
 %changelog
+* Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
+- Release 6.10-5
+- Copy the whole fs/ subtree from the koji-fetched source, instead of just
+  fs/smb/server + fs/smb/common, and point M= directly at fs/smb/server
+  within it. fs/smb/server's sources reach outside fs/smb/ via plain
+  relative includes (e.g. unicode.h pulls in "../../nls/nls_ucs2_utils.h"),
+  which broke the build ("fatal error: ../../nls/nls_ucs2_utils.h: No such
+  file or directory") once we stopped copying the full kernel tree in
+  6.10-4. Preserving the real fs/ layout resolves every such include
+  without having to chase each cross-directory reference by hand.
 * Sun August 23 2026 Arno Dubois <arno.du@orange.fr>
 - Release 6.10-4
 - Stop running "make prepare"/"modules_prepare" on the koji-fetched kernel
